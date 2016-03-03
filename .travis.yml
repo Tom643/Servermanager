@@ -1,0 +1,8 @@
+language: ruby
+rvm:
+  - 1.9.3
+  - 2.1.0
+script:
+  - ruby --version
+  - echo test1
+  - echo test2
