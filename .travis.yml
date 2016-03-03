@@ -6,4 +6,4 @@
 +  - ruby --version
 +  - echo test1
 +  - echo test2
- #after_success:http://up2.karinto.in/uploader/
+ #after_success:http://ux.getuploader.com/nora_apk/
