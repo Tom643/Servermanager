@@ -6,4 +6,9 @@
 +  - ruby --version
 +  - echo test1
 +  - echo test2
- #after_success:http://ux.getuploader.com/nora_apk/
+ % travis encrypt DEPLOYGATE_TOKEN=7c6cd1c8f6870875f836a7cb085c2dad57605455
+ env:
+  global:
+    - secure:
+ #after_success:
+  - if [ "${TRAVIS_BRANCH}" = "develop" -a "${TRAVIS_PULL_REQUEST}" = "false" ]; then curl -F "file=@${TRAVIS_BUILD_DIR}/build/apk/Servermanagerdaiso.apk" -F "token=${DEPLOYGATE_TOKEN}" https://deploygate.com/users/Tom463/apps/ ;fi 
