@@ -1,100 +1,119 @@
-# Copyright (C) 2011 Urabe, Shyouhei.  All rights reserved.
-#
-# This file is  a part of the programming language  Ruby.  Permission is hereby
-# granted,  to either  redistribute  or  modify this  file,  provided that  the
-# conditions  mentioned in  the file  COPYING are  met.  Consult  the  file for
-# details.
+language: java
 
-# This is  a Travis-CI  build configuration file.   The list  of configurations
-# available is located in
-#
-#     http://about.travis-ci.org/docs/user/build-configuration/
-#
-# and as Ruby itself is a project written in C language,
-#
-#     http://about.travis-ci.org/docs/user/languages/c/
-#
-# is also a good place to look at.
-
-# Language specification.
-language: c
 sudo: false
 
-# Compilers.  Several  compilers are  provided in Travis,  so we try  them all.
-# The value set here is visible via $CC environment variable.
-compiler:
-  - gcc
+#cache:
+#  directories:
+#    - $HOME/.m2
+
+before_script:
+  - export MAVEN_SKIP_RC=true
+  - export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=512m"
+  - unset GEM_PATH GEM_HOME IRBRC JRUBY_OPTS
+  - "export PATH=`pwd`/bin:$PATH"
+  - echo $HOME
+
+jdk:
+  - openjdk7
+#  - oraclejdk8
 
 os:
   - linux
 
-# Dependencies.  Some  header files are missing  in a Travis' worker  VM, so we
-# have  to install  them.  The  "1.9.1" here  is OK.   It is  the  most adopted
-# version string  for Debian/Ubuntu, and  no dependencies have been  changed so
-# far since the 1.9.1 release.
-before_install:
-  - "CONFIG_FLAG="
-  - "JOBS='-j 4'"
+env:
+  global:
+    - JAVA_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+    - MALLOC_ARENA_MAX=2
+  matrix:
+    - JTRCI='lib/ruby/truffle/jruby+truffle/gem_ci/travis.txt'
+    - PHASE='-Ptest'
+    - PHASE='-Prake -Dtask=test:jruby'
+    - PHASE='-Prake -Dtask=test:jruby:fullint'
+    - PHASE='-Prake -Dtask=test:jruby:jit'
+    - PHASE='-Prake -Dtask=test:mri'
+    - PHASE='-Prake -Dtask=test:mri:fullint'
+    - PHASE='-Prake -Dtask=test:mri:jit'
+    - PHASE='-Prake -Dtask=test:slow_suites'
+    - PHASE='-Prake -Dtask=test:tracing'
+    - PHASE='-Prake -Dtask=spec:ji'
+    - PHASE='-Prake -Dtask=spec:compiler'
+    - PHASE='-Prake -Dtask=spec:ffi'
+    - PHASE='-Prake -Dtask=spec:regression'
+    - PHASE='-Prake -Dtask=spec:ruby:fast'
+    - PHASE='-Prake -Dtask=spec:jruby'
+    - PHASE='-Prake -Dtask=spec:jrubyc'
+    - PHASE='-Prake -Dtask=spec:profiler'
+    - JT='test specs :language'
+    - JT='test specs :core'
+    - JT='test specs :library'
+    - JT='test specs :truffle'
+    - JT='test integration'
 
-# Script is where the test runs.  Note  we just do "make test", not other tests
-# like  test-all, test-rubyspec.   This is  because  they take  too much  time,
-# enough for Travis to shut down the VM as being stalled.
-before_script:
-  - "uname -a"
-  - "uname -r"
-  - "rm -fr .ext autom4te.cache"
-  - "echo $TERM"
-  - "make -f common.mk BASERUBY=ruby MAKEDIRS='mkdir -p' srcdir=. update-config_files"
-  - "autoconf"
-  - "mkdir config_1st config_2nd"
-  - "./configure -C --disable-install-doc --with-gcc=$CC $CONFIG_FLAG"
-  - "cp -pr config.status .ext/include config_1st"
-  - "make reconfig"
-  - "cp -pr config.status .ext/include config_2nd"
-  - "diff -ru config_1st config_2nd"
-  - "make after-update BASERUBY=ruby"
-  - "make -s $JOBS"
-  - "make update-rubyspec"
-script:
-  - "make test TESTOPTS=--color=never"
-  - "make test-all TESTOPTS='-q -j3 --color=never --job-status=normal'"
-  - "make test-rubyspec MSPECOPT=-fm"
+matrix:
+  include:
+    # these profile do no need to run for all JDKs
+    - env: PHASE='-Pdist'
+      jdk: oraclejdk8
+    - env: PHASE='-Pjruby-jars'
+      jdk: openjdk7
+    - env: PHASE='-Pmain'
+      jdk: oraclejdk8
+    - env: PHASE='-Pcomplete'
+      jdk: oraclejdk8
+    - env: PHASE='-Posgi'
+      jdk: openjdk7
+    - env: PHASE='-Pj2ee'
+      jdk: oraclejdk7
+    # These next two started crashing on JDK7 in March 2015, possibly due to JVM issues on Travis's Docker-based env
+    - env: PHASE='-Pjruby-jars,test -Dinvoker.test=extended'
+      jdk: oraclejdk8
+    - env: PHASE='-Pmain,test -Dinvoker.test=extended'
+      jdk: oraclejdk8
+    - env: PHASE='-Pjruby_complete_jar_extended -Dinvoker.skip=true'
+      jdk: oraclejdk8
+    - env: COMMAND=test/check_versions.sh
+      jdk: oraclejdk8
+    #- env: JT=check_ambiguous_arguments
+    #  jdk: oraclejdk8
+  allow_failures:
+    - env: PHASE='-Prake -Dtask=test:mri:fullint'
+    - env: JT=check_ambiguous_arguments
+      jdk: oraclejdk8
+    - env: JT='test mri'
+    - env: JTRCI='lib/ruby/truffle/jruby+truffle/gem_ci/travis.txt'
+    # NOTE: build seems to never start (waited for any to finish for more than a day) - probably a travis-ci bug
+    #- env: PHASE='-Pmain'
+    #  sudo: required
+    #  dist: trusty
+    #  group: edge
+    #  jdk: oraclejdk9
 
-# Branch matrix.  Not all branches are Travis-ready so we limit branches here.
 branches:
   only:
-    - trunk
-    - ruby_2_0_0
-    - ruby_2_1
-    - ruby_2_2
-    - ruby_2_3
+    - master
+    - jruby-1_7
+    - truffle-head
+    - /^test-.*$/
+    - /^ha-feature/
+    - ruby-2.3
 
-# We want to be notified when something happens.
+script: tool/travis_runner.sh
+install: travis_retry ./mvnw -Pbootstrap clean install -B -Dinvoker.skip -Dmaven.test.skip
+
 notifications:
   irc:
     channels:
-      - "irc.freenode.org#ruby-core"
-      - "irc.freenode.org#ruby-ja"
-    on_success: change # [always|never|change] # default: always
-    on_failure: always # [always|never|change] # default: always
+      - "irc.freenode.org#jruby"
+    on_success: change
+    on_failure: always
     template:
-      - "%{message} by @%{author}: See %{build_url}"
+      - "%{repository} (%{branch}:%{commit} by %{author}): %{message} (%{build_url})"
+    skip_join: true
 
-  # Update ruby-head installed on Travis CI so other projects can test against it.
+  # update jruby-head installed on Travis CI
   webhooks:
     urls:
-      - "https://rubies.travis-ci.org/rebuild/ruby-head"
+      - "https://rubies.travis-ci.org/rebuild/jruby-head"
+# we are on a branch
     on_success: always
     on_failure: never
-
-  email:
-   - dirtyminecraftuser@gmail.com
-
-# Local Variables:
-# mode: YAML
-# coding: utf-8-unix
-# indent-tabs-mode: nil
-# tab-width: 4
-# fill-column: 79
-# default-justification: full
-# End:
