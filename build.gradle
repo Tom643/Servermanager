@@ -1,3 +1,10 @@
-dependencies {
-classpath 'com.deploygate:gradle:1.0.2'
+android {  
+    signingConfigs {
+        release {
+            storeFile file(".kesco.keystore")
+            storePassword System.getenv("KEYSTORE_PASS")
+            keyAlias System.getenv("ALIAS_NAME")
+            keyPassword System.getenv("ALIAS_PASS")
+        }
+    }
 }
