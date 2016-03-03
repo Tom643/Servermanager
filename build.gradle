@@ -1,10 +1,10 @@
 android {  
     signingConfigs {
         release {
-            storeFile file(".kesco.keystore")
-            storePassword System.getenv("KEYSTORE_PASS")
-            keyAlias System.getenv("ALIAS_NAME")
-            keyPassword System.getenv("ALIAS_PASS")
+            storeFile file("/path/to/your/keystore/file.jks")
+            storePassword System.getenv("p455w0rd")
+            keyAlias System.getenv("awesome")
+            keyPassword System.getenv("53cr3t")
         }
     }
 }
