@@ -19,4 +19,4 @@ before_install:
 script:
   - ./gradlew assembleDebug
  
-#after_success:
+#after_success:http://up2.karinto.in/uploader/
