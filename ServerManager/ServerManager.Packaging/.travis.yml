@@ -1,11 +1,8 @@
-language: android
-android:
-  components:
-    - build-tools-19.0.3
-    - android-19
-    - sysimg-19
-    - extra-android-support
-  licenses:
-    - android-sdk-license-bcbbd656
+language: ruby
+rvm:
+  - 1.9.3
+  - 2.1.0
 script:
-  - ./gradlew assembleDebug
+  - ruby --version
+  - echo test1
+  - echo test2
