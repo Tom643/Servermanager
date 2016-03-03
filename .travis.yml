@@ -11,7 +11,7 @@ deploy:
   provider: releases
   api_key:
     secure: [生成的token]
-  file: app/build/outputs/apk/app-release.apk
+  file: app/build/outputs/apk/serermanager.apk
   skip_cleanup: true
   on:
     tags: true
